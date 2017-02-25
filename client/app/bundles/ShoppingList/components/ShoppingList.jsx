@@ -1,4 +1,5 @@
 import React, { PropTypes } from 'react';
+import axios from 'axios';
 
 export default class ShoppingList extends React.Component {
   static propTypes = {
@@ -12,18 +13,40 @@ export default class ShoppingList extends React.Component {
   constructor(props, _railsContext) {
     super(props);
 
-    this.state = { listItem: '' };
+    this.state = {
+      listItem: '',
+       items: {}
+     };
+  }
+
+  componentDidMount = () => {
+    this.getListData();
   }
 
   handleSubmit = (event) => {
     event.preventDefault();
+    this.postListData(this.state.listItem)
   }
 
   handleInputChange = (event) => {
     this.setState({ listItem: event.target.value });
   };
 
+  postListData = (item) => {
+    axios.post('https://shoppinglist-e808d.firebaseio.com/.json', {item})
+    .then((response) => {
+    this.getListData();
+    })
+  }
 
+  getListData = () => {
+    axios.get('https://shoppinglist-e808d.firebaseio.com/.json')
+    .then((response) => {
+      console.log(response.data);
+      let items = response.data;
+      this.setState({ items });
+    });
+  }
 
   render() {
     return (
@@ -47,6 +70,12 @@ export default class ShoppingList extends React.Component {
             value="add item"
           />
         </form>
+        <ul>
+          {Object.keys(this.state.items)
+          .map((key) => {return (
+            <li key={key}>{this.state.items[key].item}</li>
+            )})}
+        </ul>
       </div>
     );
   }
