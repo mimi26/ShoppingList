@@ -25,27 +25,109 @@ export default class ShoppingList extends React.Component {
 
   handleSubmit = (event) => {
     event.preventDefault();
-    this.postListData(this.state.listItem)
+    this.postListData(this.state.listItem);
+    this.setState({ listItem: ''})
   }
 
   handleInputChange = (event) => {
     this.setState({ listItem: event.target.value });
-  };
+  }
 
   postListData = (item) => {
     axios.post('https://shoppinglist-e808d.firebaseio.com/.json', {item})
     .then((response) => {
     this.getListData();
-    })
+    }).catch((error) => {
+      console.log(error);
+    });
   }
 
   getListData = () => {
     axios.get('https://shoppinglist-e808d.firebaseio.com/.json')
     .then((response) => {
-      console.log(response.data);
       let items = response.data;
       this.setState({ items });
+    }).catch((error) => {
+      console.log(error);
     });
+  }
+
+  handleDelete = (itemId) => {
+    axios.delete(`https://shoppinglist-e808d.firebaseio.com/${itemId}.json`)
+    .then((response) => {
+      let items = this.state.items;
+      delete items[itemId]
+      this.setState({ items });
+    }).catch((error) => {
+      console.log(error);
+    });
+  }
+
+  patchListData = (editedItem) => {
+    let id = this.state.itemToEdit;
+    axios.patch(`https://shoppinglist-e808d.firebaseio.com/${id}.json`, {item: editedItem})
+    .then((response) => {
+      this.getListData();
+      this.setState({
+        itemIdToEdit: null,
+        itemTextToEdit: ''
+      });
+    })
+
+  }
+
+  handleEdit = (itemId) => {
+    const items = this.state.items;
+    this.setState({
+      itemIdToEdit: itemId,
+      itemTextToEdit: items[itemId].item
+    });
+  }
+
+  handleEditChange = (event) => {
+    this.setState({ itemTextToEdit: event.target.value });
+  }
+
+  handleEditSubmit = (event) => {
+    event.preventDefault();
+    this.patchListData(this.state.itemTextToEdit);
+  }
+
+  renderItemorInputField = (key) => {
+    if(this.state.itemTextToEdit && this.state.itemIdToEdit === key) {
+      return (
+        <li key={key}>
+          <form
+            onSubmit={this.handleEditSubmit}>
+            <label>
+              Edit Item:
+            </label>
+            <input
+              type="text"
+              defaultValue={this.state.items[key].item}
+              onChange={this.handleEditChange}
+              />
+            <input
+              type="submit"
+              value="update item"
+            />
+          </form>
+        </li>
+        )
+    } else {
+      return (
+        <li key={key}>
+            <button
+              onClick={() => this.handleDelete(key)}>
+                Delete
+            </button>
+            <button
+              onClick={() => this.handleEdit(key)}>
+                Edit
+            </button>
+            {this.state.items[key].item}</li>
+        )
+    }
   }
 
   render() {
@@ -72,9 +154,7 @@ export default class ShoppingList extends React.Component {
         </form>
         <ul>
           {Object.keys(this.state.items)
-          .map((key) => {return (
-            <li key={key}>{this.state.items[key].item}</li>
-            )})}
+          .map((key) => {return this.renderItemorInputField(key)})}
         </ul>
       </div>
     );
