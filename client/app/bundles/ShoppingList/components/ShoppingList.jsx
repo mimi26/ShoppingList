@@ -46,7 +46,10 @@ export default class ShoppingList extends React.Component {
     axios.get('https://shoppinglist-e808d.firebaseio.com/.json')
     .then((response) => {
       let items = response.data;
-      this.setState({ items });
+      if (response.data !== null) {
+        this.setState({ items });
+      }
+
     }).catch((error) => {
       console.log(error);
     });
@@ -64,7 +67,7 @@ export default class ShoppingList extends React.Component {
   }
 
   patchListData = (editedItem) => {
-    let id = this.state.itemToEdit;
+    let id = this.state.itemIdToEdit;
     axios.patch(`https://shoppinglist-e808d.firebaseio.com/${id}.json`, {item: editedItem})
     .then((response) => {
       this.getListData();
@@ -94,7 +97,7 @@ export default class ShoppingList extends React.Component {
   }
 
   renderItemorInputField = (key) => {
-    if(this.state.itemTextToEdit && this.state.itemIdToEdit === key) {
+    if(this.state.itemIdToEdit && this.state.itemIdToEdit === key) {
       return (
         <li key={key}>
           <form
